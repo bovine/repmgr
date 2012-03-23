@@ -15,7 +15,9 @@ CREATE SCHEMA repmgr;
 CREATE TABLE repl_nodes (
   id            integer primary key,
   cluster   text        not null,       -- Name to identify the cluster
-  conninfo      text    not null
+  conninfo      text    not null,
+  priority  integer not null,
+  witness   boolean not null default false
 );
 ALTER TABLE repl_nodes OWNER TO repmgr;
 
