@@ -64,6 +64,7 @@ const char *progname;
 
 char	*config_file = DEFAULT_CONFIG_FILE;
 bool	verbose = false;
+char	*pid_file = NULL;
 char	repmgr_schema[MAXLEN];
 
 /*
@@ -113,6 +114,7 @@ main(int argc, char **argv)
 	{
 		{"config", required_argument, NULL, 'f'},
 		{"verbose", no_argument, NULL, 'v'},
+		{"pidfile", required_argument, NULL, 'p'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -137,7 +139,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "f:v", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "f:p:v", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -147,6 +149,9 @@ main(int argc, char **argv)
 		case 'v':
 			verbose = true;
 			break;
+		case 'p':
+			pid_file = optarg;
+			break;
 		default:
 			usage();
 			exit(ERR_BAD_CONFIG);
@@ -154,6 +159,22 @@ main(int argc, char **argv)
 	}
 
 	setup_event_handlers();
+
+	/*
+	 * Write to the pid file
+	 */
+	if (pid_file != NULL)
+	{
+		FILE *fp = fopen(pid_file, "w");
+		if (fp != NULL) {
+			fprintf(fp, "%d\n", (int) getpid());
+			fclose(fp);
+		} else {
+			log_err(_("Failed to write pidfile '%s'\n"), pid_file);
+			exit(ERR_BAD_CONFIG);
+		}
+	}
+
 
 	/*
 	 * Read the configuration file: repmgr.conf
@@ -900,7 +921,8 @@ void help(const char *progname)
 	printf(_("  --help                    show this help, then exit\n"));
 	printf(_("  --version                 output version information, then exit\n"));
 	printf(_("  --verbose                 output verbose activity information\n"));
-	printf(_("  -f, --config_file=PATH    configuration file\n"));
+	printf(_("  -f, --config=PATH         configuration file\n"));
+	printf(_("  -p, --pidfile=PATH        write our pid to this file\n"));
 	printf(_("\n%s monitors a cluster of servers.\n"), progname);
 }
 
